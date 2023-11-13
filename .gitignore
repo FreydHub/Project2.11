@@ -1,0 +1,18 @@
+.idea/*
+__pycache__/
+
+config.py
+
+models/*
+whl/*
+
+**/*.mpeg
+**/*.mp3
+**/*.whl
+**/*.google-cookie
+**/*.env
+**/*.wav
+
+model
+# Project exclude paths
+/num2t4ru/
