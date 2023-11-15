@@ -43,7 +43,7 @@ def va_speak(what: str):
 # sd.stop()
 
 '''
-
+import silero
 from num2words import num2words
 import torch
 import sounddevice as sd
@@ -52,13 +52,12 @@ from googletrans import Translator
 
 print("[!]")
 
-translator = Translator() # Переводчик
+translator = Translator()  # Переводчик
 
 # Считывание температуры из файла
 f1 = open('weather.txt', 'r')
-num = f1.read(1)
-num += f1.read(2)
-num = num.replace(" ","")
+num = f1.read(2)
+num = num.replace(" ", "")
 f1.close()
 nums = num
 
@@ -71,19 +70,19 @@ text = f2.read()
 f2.close()
 
 # Объедение перед озвучиванием
-s = txt + " градусов цельсия" + translator.translate(text, dest='ru').text
-s.replace(' ', nums)
+s = txt + " градусов цельсия" + text
+s = s.replace(' ', num)
 
 # Silero TTS
 language = 'ru'
-model_id = 'v3_1_ru'
+model_id = 'v4_ru'
 sample_rate = 48000
-speaker = 'eugene'
+speaker = 'xenia'
 device = torch.device('cpu')
 model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models',
-                                    model='silero_tts',
-                                    language=language,
-                                    speaker=model_id)
+                                     model='silero_tts',
+                                     language=language,
+                                     speaker=model_id)
 model.to(device)
 
 audio = model.apply_tts(text=s,
