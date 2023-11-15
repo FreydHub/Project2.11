@@ -1,3 +1,4 @@
+'''
 import torch
 import os
 import sounddevice as sd
@@ -42,28 +43,55 @@ def va_speak(what: str):
 # sd.stop()
 
 '''
+
+from num2words import num2words
 import torch
-import zipfile
-import torchaudio
-from glob import glob
+import sounddevice as sd
+import time
+from googletrans import Translator
 
-device = torch.device('cpu')  # gpu also works, but our models are fast enough for CPU
-model, decoder, utils = torch.hub.load(repo_or_dir='snakers4/silero-models',
-                                       model='silero_stt',
-                                       language='en', # also available 'de', 'es'
-                                       device=device)
-(read_batch, split_into_batches,
- read_audio, prepare_model_input) = utils  # see function signature for details
+print("[!]")
 
-# download a single file in any format compatible with TorchAudio
-torch.hub.download_url_to_file('https://opus-codec.org/static/examples/samples/speech_orig.wav',
-                               dst ='speech_orig.wav', progress=True)
-test_files = glob('speech_orig.wav')
-batches = split_into_batches(test_files, batch_size=10)
-input = prepare_model_input(read_batch(batches[0]),
-                            device=device)
+translator = Translator() # Переводчик
 
-output = model(input)
-for example in output:
-    print(decoder(example.cpu()))
-    '''
+# Считывание температуры из файла
+f1 = open('weather.txt', 'r')
+num = f1.read(1)
+num += f1.read(2)
+num = num.replace(" ","")
+f1.close()
+nums = num
+
+# Перевод числа в слово т.к Silero не воспринимает цифры
+txt = num2words(num, lang='ru')
+
+# Считывание полного прогноза
+f2 = open('weather1.txt', 'r')
+text = f2.read()
+f2.close()
+
+# Объедение перед озвучиванием
+s = txt + " градусов цельсия" + translator.translate(text, dest='ru').text
+s.replace(' ', nums)
+
+# Silero TTS
+language = 'ru'
+model_id = 'v3_1_ru'
+sample_rate = 48000
+speaker = 'eugene'
+device = torch.device('cpu')
+model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models',
+                                    model='silero_tts',
+                                    language=language,
+                                    speaker=model_id)
+model.to(device)
+
+audio = model.apply_tts(text=s,
+                        speaker=speaker,
+                        sample_rate=sample_rate)
+
+seconds = len(audio) / sample_rate
+
+sd.play(audio, sample_rate)
+time.sleep(seconds)
+sd.stop()
